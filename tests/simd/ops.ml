@@ -377,7 +377,10 @@ module Float64 = struct
 
     type t = float
 
-    external round : (t [@unboxed]) -> (t [@unboxed]) = "caml_vec128_unreachable" "float64_round" [@@noalloc]
+    external c_round : (t [@unboxed]) -> (t [@unboxed]) = "caml_vec128_unreachable" "float64_round" [@@noalloc]
+    external c_min : (t [@unboxed]) -> (t [@unboxed]) -> (t [@unboxed]) = "caml_vec128_unreachable" "float64_min" [@@noalloc]
+    external c_max : (t [@unboxed]) -> (t [@unboxed]) -> (t [@unboxed]) = "caml_vec128_unreachable" "float64_max" [@@noalloc]
+    external c_sqrt : (t [@unboxed]) -> (t [@unboxed]) = "caml_vec128_unreachable" "float64_sqrt" [@@noalloc]
 
     let check_floats f =
         let open Float in
@@ -412,6 +415,21 @@ module Float64 = struct
               (if Random.bool () then Int64.float_of_bits f1 else Int64.(neg f1 |> float_of_bits))
         done
     ;;
+
+    module Tests = struct
+        external max : t -> t -> t = "" "caml_sse2_float64_max" [@@noalloc] [@@builtin] [@@unboxed]
+        external min : t -> t -> t = "" "caml_sse2_float64_min" [@@noalloc] [@@builtin] [@@unboxed]
+        external sqrt : t -> t = "" "caml_sse2_float64_sqrt" [@@noalloc] [@@builtin] [@@unboxed]
+        external round : (int [@untagged]) -> (t [@unboxed]) -> (t [@unboxed]) = "" "caml_sse41_float64_round"
+            [@@noalloc] [@@builtin]
+
+        let () =
+            check_floats (fun l r -> eqf (max l r) (c_max l r));
+            check_floats (fun l r -> eqf (min l r) (c_min l r));
+            check_floats (fun l _ -> eqf (sqrt l) (c_sqrt l));
+            check_floats (fun l _ -> eqf (round 0x8 l) (c_round l))
+        ;;
+    end
 end
 
 module Int64s = struct
@@ -936,6 +954,8 @@ module Float64x2 = struct
         [@@noalloc] [@@unboxed] [@@builtin]
     external min : t -> t -> t = "caml_vec128_unreachable" "caml_sse2_float64x2_min"
         [@@noalloc] [@@unboxed] [@@builtin]
+    external sqrt : t -> t = "caml_vec128_unreachable" "caml_sse2_float64x2_sqrt"
+        [@@noalloc] [@@unboxed] [@@builtin]
 
     let check_binop scalar vector f0 f1 =
         failmsg := (fun () -> Printf.printf "%f | %f\n%!" f0 f1);
@@ -956,7 +976,14 @@ module Float64x2 = struct
         Float64.check_floats (check_binop Float.mul mul);
         Float64.check_floats (check_binop Float.div div);
         Float64.check_floats (check_binop (Float.max |> preserve_nan |> preserve_zero) max);
-        Float64.check_floats (check_binop (Float.min |> preserve_nan |> preserve_zero) min)
+        Float64.check_floats (check_binop (Float.min |> preserve_nan |> preserve_zero) min);
+        Float64.check_floats (fun f0 f1 ->
+            failmsg := (fun () -> Printf.printf "sqrt %f | %f\n%!" f0 f1);
+            let fv = to_float64x2 f0 f1 in
+            let res = sqrt fv in
+            eq (float64x2_low_int64 res) (float64x2_high_int64 res)
+               (Int64.bits_of_float (Float.sqrt f0)) (Int64.bits_of_float (Float.sqrt f1))
+        )
     ;;
 
     external cvt_int32x4 : t -> int32x4 = "caml_vec128_unreachable" "caml_sse2_cvt_float64x2_int32x4"
@@ -1045,7 +1072,7 @@ module Float64x2 = struct
             failmsg := (fun () -> Printf.printf "roundf64 %f %f\n%!" f0 f1);
             let fv = to_float64x2 f0 f1 in
             let result = round 0x8 fv in
-            let expect = to_float64x2 (Float64.round f0) (Float64.round f1) in
+            let expect = to_float64x2 (Float64.c_round f0) (Float64.c_round f1) in
             eq (float64x2_low_int64 result) (float64x2_high_int64 result)
             (float64x2_low_int64 expect) (float64x2_high_int64 expect)
         )

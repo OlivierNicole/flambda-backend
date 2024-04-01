@@ -85,3 +85,24 @@ void caml_garbage_collection(void)
                               nallocs, alloc_len);
   }
 }
+
+#define DECLARE_SIGNAL_HANDLER(name) \
+  static void name(int sig, siginfo_t * info, ucontext_t * context)
+
+#define SET_SIGACT(sigact,name)                                       \
+  sigact.sa_sigaction = (void (*)(int,siginfo_t *,void *)) (name);    \
+  sigact.sa_flags = SA_SIGINFO
+
+DECLARE_SIGNAL_HANDLER(segv_handler)
+{
+  caml_raise_stack_overflow();
+}
+
+void caml_init_nat_signals(void)
+{
+    struct sigaction act;
+    SET_SIGACT(act, segv_handler);
+    act.sa_flags |= SA_ONSTACK | SA_NODEFER;
+    sigemptyset(&act.sa_mask);
+    sigaction(SIGSEGV, &act, NULL);
+}

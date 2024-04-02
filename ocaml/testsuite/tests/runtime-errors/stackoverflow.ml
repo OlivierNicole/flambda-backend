@@ -1,11 +1,12 @@
 (* TEST
    flags = "-w -a"
    ocamlrunparam += "l=100000"
-   * flambda
-   ** bytecode
-      reference = "${test_source_directory}/stackoverflow.byte.reference"
-   ** native
-      reference = "${test_source_directory}/stackoverflow.opt.reference"
+   * runtime5
+   ** flambda
+   *** bytecode
+       reference = "${test_source_directory}/stackoverflow.byte.reference"
+   *** native
+       reference = "${test_source_directory}/stackoverflow.opt.reference"
 *)
 
 let rec f x =

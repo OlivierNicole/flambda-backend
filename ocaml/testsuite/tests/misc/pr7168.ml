@@ -1,6 +1,7 @@
 (* TEST
 
 ocamlrunparam += "l=100000"
+* runtime5
 *)
 
 let rec f x =

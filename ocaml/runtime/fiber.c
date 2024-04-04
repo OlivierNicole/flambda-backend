@@ -833,6 +833,17 @@ void caml_free_stack (struct stack_info* stack)
 
   CAMLassert(stack->magic == 42);
   CAMLassert(cache != NULL);
+
+#ifndef USE_MMAP_MAP_STACK
+#ifdef NATIVE_CODE
+  // CR xclerc for xclerc: check the value returned by mprotect?
+  int page_size = getpagesize();
+  mprotect((void *) ((char *) stack + page_size),
+           page_size,
+           PROT_READ | PROT_WRITE | PROT_EXEC);
+#endif
+#endif
+
   if (stack->cache_bucket != -1) {
     stack->exception_ptr =
       (void*)(cache[stack->cache_bucket]);

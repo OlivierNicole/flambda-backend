@@ -93,9 +93,24 @@ void caml_garbage_collection(void)
   sigact.sa_sigaction = (void (*)(int,siginfo_t *,void *)) (name);    \
   sigact.sa_flags = SA_SIGINFO
 
+#include <unistd.h>
+
 DECLARE_SIGNAL_HANDLER(segv_handler)
 {
-  caml_raise_stack_overflow();
+  struct sigaction act;
+  struct stack_info *block = Caml_state->current_stack;
+  char* fault_addr = info->si_addr;
+  int page_size = getpagesize();
+  char* protected_low = (char *) block + page_size;
+  char* protected_high = protected_low + page_size;
+  if ((fault_addr >= protected_low) && (fault_addr < protected_high)) {
+    caml_raise_stack_overflow();
+  } else {
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+    sigaction(SIGSEGV, &act, NULL);
+  }
 }
 
 void caml_init_nat_signals(void)

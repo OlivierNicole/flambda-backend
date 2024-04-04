@@ -123,12 +123,12 @@ Caml_inline struct stack_info* alloc_for_stack (mlsize_t wosize)
                8 /* for alignment to 16-bytes, needed for arm64 */ +
                sizeof(struct stack_handler);
   struct stack_info* block;
-  block = aligned_alloc(page_size, len);
-  if (block == NULL) {
+  int memalign_res = posix_memalign((void **) &block, page_size, len);
+  if (memalign_res) {
     return NULL;
   }
   block->size = len;
-  int protect = mprotect(((void*) block) + page_size, page_size, PROT_NONE);
+  int protect = mprotect(((char*) block) + page_size, page_size, PROT_NONE);
   if (protect) {
     free(block);
     return NULL;

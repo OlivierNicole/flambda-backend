@@ -114,6 +114,7 @@ Caml_inline struct stack_info* alloc_for_stack (mlsize_t wosize)
   si->size = len;
   return si;
 #else
+#ifdef NATIVE_CODE
   size_t bsize = sizeof(value) * wosize;
   int page_size = getpagesize();
   int num_pages = (bsize + page_size - 1) / page_size;
@@ -134,6 +135,13 @@ Caml_inline struct stack_info* alloc_for_stack (mlsize_t wosize)
     return NULL;
   }
   return block;
+#else
+  size_t len = sizeof(struct stack_info) +
+               sizeof(value) * wosize +
+               8 /* for alignment to 16-bytes, needed for arm64 */ +
+               sizeof(struct stack_handler);
+  return caml_stat_alloc_noexc(len);
+#endif /* NATIVE_CODE */
 #endif /* USE_MMAP_MAP_STACK */
 }
 

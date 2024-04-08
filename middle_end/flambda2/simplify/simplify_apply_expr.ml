@@ -596,6 +596,14 @@ let simplify_direct_partial_application ~simplify_expr dacc apply
         ~free_names_of_body:Unknown
     in
     let name = Function_slot.to_string callee's_function_slot ^ "_partial" in
+    if !Clflags.dump_partial_application then begin
+      let name = Function_slot.to_string callee's_function_slot in
+      let loc = Debuginfo.to_location dbg in
+      Format.fprintf Format.err_formatter
+        "Partial application of %s (%a)\n"
+        name
+        Location.print_loc loc
+    end;
     let absolute_history, relative_history =
       DE.inlining_history_tracker (DA.denv dacc)
       |> Inlining_history.Tracker.fundecl

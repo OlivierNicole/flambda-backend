@@ -126,6 +126,7 @@ val dump_rawclambda : bool ref
 val dump_clambda : bool ref
 val dump_rawflambda : bool ref
 val dump_flambda : bool ref
+val dump_partial_application : bool ref
 val dump_flambda_let : int option ref
 val dump_instr : bool ref
 val keep_camlprimc_file : bool ref

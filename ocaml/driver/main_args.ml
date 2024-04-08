@@ -730,6 +730,12 @@ let mk_dflambda f =
   "-dflambda", Arg.Unit f, " Print Flambda (1 or 2) terms on exit from Flambda"
 ;;
 
+let mk_dpartial_application f =
+  "-dpartial-application", Arg.Unit f,
+  " Print places where the flambda2 middle end detects partial application \
+   (big error bars)"
+;;
+
 let mk_drawflambda f =
   "-drawflambda", Arg.Unit f, " Print Flambda terms after closure conversion\n\
   \     (for Flambda 2, after [Lambda_to_flambda])"
@@ -1048,6 +1054,7 @@ module type Optcommon_options = sig
 
   val _clambda_checks : unit -> unit
   val _dflambda : unit -> unit
+  val _dpartial_application : unit -> unit
   val _drawflambda : unit -> unit
   val _dflambda_invariants : unit -> unit
   val _dflambda_no_invariants : unit -> unit
@@ -1464,6 +1471,7 @@ struct
     mk_dclambda F._dclambda;
     mk_dcmm_invariants F._dcmm_invariants;
     mk_dflambda F._dflambda;
+    mk_dpartial_application F._dpartial_application;
     mk_drawflambda F._drawflambda;
     mk_dflambda_invariants F._dflambda_invariants;
     mk_dflambda_no_invariants F._dflambda_no_invariants;
@@ -1590,6 +1598,7 @@ module Make_opttop_options (F : Opttop_options) = struct
     mk_dcmm_invariants F._dcmm_invariants;
     mk_drawflambda F._drawflambda;
     mk_dflambda F._dflambda;
+    mk_dpartial_application F._dpartial_application;
     mk_dcmm F._dcmm;
     mk_dsel F._dsel;
     mk_dcombine F._dcombine;
@@ -1798,6 +1807,7 @@ module Default = struct
     let _dcombine = set dump_combine
     let _dcse = set dump_cse
     let _dflambda = set dump_flambda
+    let _dpartial_application = set dump_partial_application
     let _dflambda_invariants = set flambda_invariant_checks
     let _dflambda_let stamp = dump_flambda_let := (Some stamp)
     let _dflambda_no_invariants = clear flambda_invariant_checks

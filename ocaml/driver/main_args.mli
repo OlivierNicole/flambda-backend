@@ -211,6 +211,7 @@ module type Optcommon_options = sig
 
   val _clambda_checks : unit -> unit
   val _dflambda : unit -> unit
+  val _dpartial_application : unit -> unit
   val _drawflambda : unit -> unit
   val _dflambda_invariants : unit -> unit
   val _dflambda_no_invariants : unit -> unit

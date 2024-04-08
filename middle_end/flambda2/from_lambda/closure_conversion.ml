@@ -2624,6 +2624,13 @@ let wrap_partial_application acc env apply_continuation (apply : IR.apply)
   (* In case of partial application, creates a wrapping function from scratch to
      allow inlining and lifting *)
   let wrapper_id = Ident.create_local ("partial_" ^ Ident.name apply.func) in
+  if !Clflags.dump_partial_application then begin
+    let loc = Debuginfo.Scoped_location.to_location apply.loc in
+    Format.fprintf Format.err_formatter
+      "Partial application of %s (%a)\n"
+      (Ident.name apply.func)
+      Location.print_loc loc
+  end;
   let function_slot =
     Function_slot.create
       (Compilation_unit.get_current_exn ())

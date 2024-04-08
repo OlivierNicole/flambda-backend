@@ -599,7 +599,9 @@ let simplify_direct_partial_application ~simplify_expr dacc apply
     if !Clflags.dump_partial_application then begin
       let name = Function_slot.to_string callee's_function_slot in
       let loc = Debuginfo.to_location dbg in
-      Compmisc.with_ppf_dump ~file_prefix:"partial" (fun ppf ->
+      Compmisc.with_ppf_dump
+        ~file_prefix:(Compenv.extract_output !Clflags.output_name ^ ".partial")
+        (fun ppf ->
         Format.fprintf ppf
           "Partial application of %s (%a)\n"
           name

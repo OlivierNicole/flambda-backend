@@ -2627,7 +2627,7 @@ let wrap_partial_application acc env apply_continuation (apply : IR.apply)
   if !Clflags.dump_partial_application then begin
     let loc = Debuginfo.Scoped_location.to_location apply.loc in
     Compmisc.with_ppf_dump
-      ~file_prefix:(Compenv.extract_output !Clflags.output_name ^ ".partial")
+      ~file_prefix:(Option.value !Clflags.output_name ~default:"unknown" ^ ".partial")
       (fun ppf ->
       Format.fprintf ppf
         "Partial application of %s (%a)\n"

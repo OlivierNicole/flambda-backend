@@ -1,5 +1,9 @@
 (* TEST
    flags = "-extension layouts_alpha"
+
+   * flambda2
+   ** native
+   ** bytecode
  *)
 
 type t = { t : t; flt : float# }

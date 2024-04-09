@@ -2626,13 +2626,15 @@ let wrap_partial_application acc env apply_continuation (apply : IR.apply)
   let wrapper_id = Ident.create_local ("partial_" ^ Ident.name apply.func) in
   if !Clflags.dump_partial_application then begin
     let loc = Debuginfo.Scoped_location.to_location apply.loc in
+
     Compmisc.with_ppf_dump
       ~file_prefix:(Option.value !Clflags.output_name ~default:"unknown" ^ ".partial")
       (fun ppf ->
       Format.fprintf ppf
-        "Partial application of %s (%a)\n"
+        "Partial application of %s (%a) (cwd %s)\n"
         (Ident.name apply.func)
-        Location.print_loc loc)
+        Location.print_loc loc
+        (Sys.getcwd ()))
   end;
   let function_slot =
     Function_slot.create

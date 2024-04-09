@@ -603,9 +603,10 @@ let simplify_direct_partial_application ~simplify_expr dacc apply
         ~file_prefix:(Option.value !Clflags.output_name ~default:"unknown" ^ ".partial")
         (fun ppf ->
         Format.fprintf ppf
-          "Partial application of %s (%a)\n"
+          "Partial application of %s (%a) (cwd %s)\n"
           name
-          Location.print_loc loc)
+          Location.print_loc loc
+          (Sys.getcwd ()))
     end;
     let absolute_history, relative_history =
       DE.inlining_history_tracker (DA.denv dacc)

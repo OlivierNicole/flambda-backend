@@ -309,3 +309,5 @@ let () = (* Literals *)
   check 0x8p+124s 0x8p+124;
   ()
 ;;
+
+(* CR mslater: (float32) test pattern matching *)

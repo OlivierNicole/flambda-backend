@@ -20,38 +20,32 @@
 
 type t
 
+val zero : t
+val one : t
 val neg : t -> t
-
 val abs : t -> t
-
 val add : t -> t -> t
-
 val sub : t -> t -> t
-
 val mul : t -> t -> t
-
 val div : t -> t -> t
-
 val mod_ : t -> t -> t
-
 val compare : t -> t -> int
-
 val equal : t -> t -> bool
 
-(** Parse 32-bit float literal. *)
 val of_string : string -> t
+(** Parse 32-bit float literal. *)
 
-(** Format 32-bit float to string. *)
 val to_string : t -> string
+(** Format 32-bit float to string. *)
 
-(** Convert from a 64-bit float; rounds to the nearest 32-bit float. *)
 val of_float : float -> t
+(** Convert from a 64-bit float; rounds to the nearest 32-bit float. *)
 
-(** Convert to a 64-bit float; exact. *)
 val to_float : t -> float
+(** Convert to a 64-bit float; exact. *)
 
-(** Bit-cast to 32-bit integer. *)
 val to_bits : t -> int32
+(** Bit-cast to 32-bit integer. *)
 
-(** Bit-cast from 32-bit integer. *)
 val of_bits : int32 -> t
+(** Bit-cast from 32-bit integer. *)

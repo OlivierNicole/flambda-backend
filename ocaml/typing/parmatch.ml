@@ -271,9 +271,8 @@ let const_compare x y =
   | Const_unboxed_float f1, Const_unboxed_float f2
   | Const_float f1, Const_float f2 ->
       Stdlib.compare (float_of_string f1) (float_of_string f2)
-  | Const_float32 _f1, Const_float32 _f2 ->
-      (* CR mslater: (float32) literals *)
-      assert false
+  | Const_float32 f1, Const_float32 f2 ->
+      Compiler_float32.(compare (of_string f1) (of_string f2))
   | Const_string (s1, _, _), Const_string (s2, _, _) ->
       String.compare s1 s2
   | (Const_int _
@@ -1106,8 +1105,12 @@ let build_other ext env =
             (function f -> Tpat_constant(Const_float (string_of_float f)))
             0.0 (fun f -> f +. 1.0) d env
       | Constant Const_float32 _ ->
-            (* CR mslater: (float32) literals *)
-            assert false
+            let open Compiler_float32 in
+            build_other_constant
+            (function Constant(Const_float32 f) -> of_string f
+                    | _ -> assert false)
+            (function f -> Tpat_constant(Const_float32 (to_string f)))
+            zero (fun f -> add f one) d env
       | Constant Const_unboxed_float _ ->
           build_other_constant
             (function Constant(Const_unboxed_float f) -> float_of_string f

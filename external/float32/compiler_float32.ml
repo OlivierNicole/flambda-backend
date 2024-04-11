@@ -17,8 +17,9 @@
 
 type t = int32
 
+let zero = 0l
+let one = 0x3f800000l
 let to_bits x = x
-
 let of_bits x = x
 
 external neg : t -> t = "compiler_float32_neg_boxed" "compiler_float32_neg"
@@ -58,7 +59,6 @@ external to_float : t -> float
   [@@unboxed]
 
 external of_string : string -> t = "compiler_float32_of_string"
-
 external format : string -> t -> string = "compiler_float32_format"
 
 let to_string f = Stdlib.valid_float_lexem (format "%.9g" f)

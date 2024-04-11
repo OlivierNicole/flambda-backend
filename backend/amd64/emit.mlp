@@ -1196,6 +1196,19 @@ let emit_simd_instr op i =
   | SSE42 (Cmpistrz n) ->
     I.pcmpistri (X86_dsl.int n) (arg i 1) (arg i 0); I.set E (res8 i 0); I.movzx (res8 i 0) (res i 0)
 
+(* CR xclerc for xclerc: consider for a proper type (possibly when rebasing
+   over the branch moving checks down) *)
+let handle_overflow = ref (None : (label * label * int) option)
+
+let emit_stack_check () =
+    begin match !handle_overflow with
+    | None -> ()
+    | Some (overflow, ret, _max_frame_size) ->
+      I.cmp (domain_field Domainstate.Domain_current_stack_bound) rsp;
+      I.jb (label overflow);
+      def_label ret;
+    end
+
 (* Emit an instruction *)
 let emit_instr fallthrough i =
   emit_debug_info_linear i;
@@ -1215,7 +1228,8 @@ let emit_instr fallthrough i =
         I.sub (int n) rsp;
         cfi_adjust_cfa_offset n;
       end;
-    end
+    end;
+    emit_stack_check ()
   | Lop(Imove | Ispill | Ireload) ->
       move i.arg.(0) i.res.(0)
   | Lop(Iconst_int n) ->
@@ -1838,40 +1852,28 @@ let fundecl fundecl =
   D.label (label_name (emit_symbol fundecl.fun_name));
   emit_debug_info fundecl.fun_dbg;
   cfi_startproc ();
-  let handle_overflow_and_max_frame_size =
-    (* CR mshinwell: this should be conditionalized on a specific
-       "stack checks enabled" config option, so we can backport to 4.x *)
-    if not Config.runtime5 then None
-    else (
-      if !Clflags.runtime_variant = "d" then
-        emit_call (Cmm.global_symbol "caml_assert_stack_invariants");
-      let { max_frame_size; contains_nontail_calls} =
-        preproc_stack_check
-          ~fun_body:fundecl.fun_body ~frame_size:(frame_size ()) ~trap_size:16
-      in
-      let handle_overflow =
-        if contains_nontail_calls || max_frame_size >= stack_threshold_size then begin
-          let overflow = new_label () and ret = new_label () in
-          let threshold_offset = Domainstate.stack_ctx_words * 8 + stack_threshold_size in
-          I.lea (mem64 NONE (-(max_frame_size + threshold_offset)) RSP) r10;
-          I.cmp (domain_field Domainstate.Domain_current_stack) r10;
-          I.jb (label overflow);
-          def_label ret;
-          Some (overflow, ret)
-        end else None
-      in
-      match handle_overflow with
-      | None -> None
-      | Some handle_overflow -> Some (handle_overflow, max_frame_size)
-    )
-  in
+  handle_overflow := None;
+  (* CR mshinwell: this should be conditionalized on a specific
+     "stack checks enabled" config option, so we can backport to 4.x *)
+  if Config.runtime5 then (
+    if !Clflags.runtime_variant = "d" then
+      emit_call (Cmm.global_symbol "caml_assert_stack_invariants");
+    let { max_frame_size; contains_nontail_calls} =
+      preproc_stack_check
+        ~fun_body:fundecl.fun_body ~frame_size:(frame_size ()) ~trap_size:16
+    in
+    if contains_nontail_calls || max_frame_size >= stack_threshold_size then begin
+      let overflow = new_label () and ret = new_label () in
+      handle_overflow := Some (overflow, ret, max_frame_size)
+    end);
+  if not !prologue_required then assert (!handle_overflow = None);
   emit_all true fundecl.fun_body;
   List.iter emit_call_gc !call_gc_sites;
   List.iter emit_local_realloc !local_realloc_sites;
   emit_call_safety_errors ();
-  begin match handle_overflow_and_max_frame_size with
+  begin match !handle_overflow with
     | None -> ()
-    | Some ((overflow,ret), max_frame_size) -> begin
+    | Some (overflow, ret, max_frame_size) -> begin
         def_label overflow;
         (* Pass the desired frame size on the stack, since all of the
            argument-passing registers may be in use.
